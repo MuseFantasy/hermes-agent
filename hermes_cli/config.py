@@ -3217,6 +3217,7 @@ _VALID_CUSTOM_PROVIDER_FIELDS = {
     # key_env is read at runtime by runtime_provider.py and auxiliary_client.py
     # — include it here so the set accurately describes the supported schema.
     "key_env",
+    "discover_models",
 }
 
 # Fields that look like they should be inside custom_providers, not at root
