@@ -129,6 +129,23 @@ TOOLSETS = {
         "includes": []
     },
 
+    "narrative": {
+        "description": "Narrative story creation tools — tree graph, character sheet, voice cloning, storybook rendering (Noustiny pipeline)",
+        "tools": [
+            "story_tree_graph",
+            "narrative_context_builder",
+            "motif_tracker",
+            "story_copyright_detector",
+            "character_sheet_builder",
+            "character_registry_lookup",
+            "narration_voice_director",
+            "voice_sample_builder",
+            "voice_clone_synthesize",
+            "noustiny_storybook_tool"
+        ],
+        "includes": []
+    },
+
     "computer_use": {
         "description": (
             "Background macOS desktop control via cua-driver — screenshots, "

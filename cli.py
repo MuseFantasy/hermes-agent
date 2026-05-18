@@ -7217,6 +7217,28 @@ class HermesCLI:
         except Exception:
             return False
 
+    def _should_handle_destructive_slash_inline(self, text: str) -> bool:
+        """Return True when destructive slash commands should dispatch
+        on the UI thread instead of through the process_loop daemon.
+
+        /new, /clear, /reset, and /undo call _confirm_destructive_slash
+        which uses prompt_toolkit's run_in_terminal.  When dispatched
+        from the process_loop daemon thread the prompt falls back to raw
+        input() which races with prompt_toolkit's own stdin reader and
+        can crash the application with "Return value already set".
+        Handling these inline (like /model) keeps the prompt on the main
+        thread where run_in_terminal works safely.
+        """
+        if not text or not _looks_like_slash_command(text):
+            return False
+        try:
+            from hermes_cli.commands import resolve_command
+            base = text.split(None, 1)[0].lower().lstrip('/')
+            cmd = resolve_command(base)
+            return bool(cmd and cmd.name in ("undo",))
+        except Exception:
+            return False
+
     def _output_console(self):
         """Use prompt_toolkit-safe Rich rendering once the TUI is live."""
         if getattr(self, "_app", None):
@@ -7730,12 +7752,6 @@ class HermesCLI:
             self._force_full_redraw()
             _cprint(f"  {_DIM}✓ UI redrawn{_RST}")
         elif canonical == "clear":
-            if self._confirm_destructive_slash(
-                "clear",
-                "This clears the screen and starts a new session.\n"
-                "The current conversation history will be discarded.",
-            ) is None:
-                return
             self.new_session(silent=True)
             _clear_output_history()
             # Clear terminal screen.  Inside the TUI, Rich's console.clear()
@@ -7801,6 +7817,7 @@ class HermesCLI:
                     self._console_print(f"[dim {_tip_color}]✦ Tip: {_tip}[/]")
                 except Exception:
                     pass
+            return True
         elif canonical == "history":
             self.show_history()
         elif canonical == "title":
@@ -7860,12 +7877,6 @@ class HermesCLI:
         elif canonical == "new":
             parts = cmd_original.split(maxsplit=1)
             title = parts[1].strip() if len(parts) > 1 else None
-            if self._confirm_destructive_slash(
-                "new",
-                "This starts a fresh session.\n"
-                "The current conversation history will be discarded.",
-            ) is None:
-                return
             self.new_session(title=title)
         elif canonical == "resume":
             self._handle_resume_command(cmd_original)
