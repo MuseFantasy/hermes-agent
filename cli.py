@@ -3079,6 +3079,28 @@ class HermesCLI:
         emoji = "⏱" if live else "⏲"
         return f"{emoji} {time_str}"
 
+    # ══ Custom patch (muse): model location icon 🖥️ local / ☁️ cloud ══
+    def _get_location_icon(self, model_name: str) -> str:
+        """Return 🖥️ if model is served from a local endpoint, else ☁️."""
+        try:
+            _cfg = self.config
+            _model_cfg = _cfg.get("model", {}) or {}
+            _base_url = _model_cfg.get("base_url") or ""
+            if not _base_url:
+                _provider = _model_cfg.get("provider", "")
+                _providers = _cfg.get("providers", {}) or {}
+                _prov_cfg = _providers.get(_provider, {}) or {}
+                _base_url = _prov_cfg.get("base_url", "")
+            if _base_url:
+                _bl = _base_url.lower()
+                local_indicators = ["localhost", "127.0.0.1", "0.0.0.0", "192.168.", "10.0.", "172.16."]
+                for ind in local_indicators:
+                    if ind in _bl:
+                        return "🖥️"
+            return "☁️"
+        except Exception:
+            return "☁️"
+
     def _get_status_bar_snapshot(self) -> Dict[str, Any]:
         # Prefer the agent's model name — it updates on fallback.
         # self.model reflects the originally configured model and never
@@ -3096,6 +3118,8 @@ class HermesCLI:
         snapshot = {
             "model_name": model_name,
             "model_short": model_short,
+            # ══ Custom patch (muse): model location icon 🖥️/☁️ ══
+            "location_icon": self._get_location_icon(model_name),
             "duration": format_duration_compact(elapsed_seconds),
             "prompt_elapsed": self._format_prompt_elapsed(
                 getattr(self, "_prompt_start_time", None),
@@ -3412,6 +3436,7 @@ class HermesCLI:
                 frags = [
                     ("class:status-bar", " ⚕ "),
                     ("class:status-bar-strong", snapshot["model_short"]),
+                    ("class:status-bar-dim", f" {snapshot.get('location_icon', '')}"),
                     ("class:status-bar-dim", " · "),
                     ("class:status-bar-dim", duration_label),
                 ]
@@ -3428,6 +3453,7 @@ class HermesCLI:
                     frags = [
                         ("class:status-bar", " ⚕ "),
                         ("class:status-bar-strong", snapshot["model_short"]),
+                        ("class:status-bar-dim", f" {snapshot.get('location_icon', '')}"),
                         ("class:status-bar-dim", " · "),
                         (self._status_bar_context_style(percent), percent_label),
                     ]
@@ -3459,6 +3485,7 @@ class HermesCLI:
                     frags = [
                         ("class:status-bar", " ⚕ "),
                         ("class:status-bar-strong", snapshot["model_short"]),
+                        ("class:status-bar-dim", f" {snapshot.get('location_icon', '')}"),
                         ("class:status-bar-dim", " │ "),
                         ("class:status-bar-dim", context_label),
                         ("class:status-bar-dim", " │ "),
