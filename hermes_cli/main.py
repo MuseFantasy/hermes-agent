@@ -1753,6 +1753,12 @@ def cmd_postinstall(args):
 
 def cmd_model(args):
     """Select default model — starts with provider selection, then model picker."""
+    # --probe short-circuits the interactive picker: only run the capability
+    # probe against the currently configured model/base_url, then exit.
+    if getattr(args, "probe", False):
+        from hermes_cli.model_probe import probe_and_apply
+        import sys as _sys
+        _sys.exit(probe_and_apply())
     _require_tty("model")
     select_provider_and_model(args=args)
 
@@ -9890,6 +9896,15 @@ def main():
         "--insecure",
         action="store_true",
         help="Disable TLS verification for Nous login (testing only)",
+    )
+    model_parser.add_argument(
+        "--probe",
+        action="store_true",
+        help="Probe the configured provider's /v1/models endpoint to auto-detect "
+             "the current context window and persist it to model.context_length. "
+             "Use this after changing the upstream routing (e.g. Volcengine Ark "
+             "Coding Plan rebind) to keep Hermes's compression thresholds aligned "
+             "with the real model capacity.",
     )
     model_parser.set_defaults(func=cmd_model)
 

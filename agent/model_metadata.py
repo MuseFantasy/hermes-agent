@@ -190,6 +190,17 @@ DEFAULT_CONTEXT_LENGTHS = {
     "deepseek-chat": 1_000_000,
     "deepseek-reasoner": 1_000_000,
     "deepseek": 128000,
+    # Volcengine Ark Coding Plan — routing aliases.
+    # `ark-code-latest` is a server-side router that dispatches to whichever
+    # underlying model the user has bound in the Ark console (Doubao / Kimi
+    # / GLM / DeepSeek / MiniMax). The router-assigned context_window varies
+    # per backend (128k–1M). This fallback assumes the most generous tier
+    # (1M, matches deepseek-v4-pro which Ark commonly routes to). Users can
+    # override with `hermes model --probe` to query /api/coding/v3/models
+    # for the live value, or set model.context_length explicitly in
+    # config.yaml.
+    "ark-code-latest": 1_048_576,
+    "ark-code": 1_048_576,
     # Meta
     "llama": 131072,
     # Qwen — specific model families before the catch-all.
